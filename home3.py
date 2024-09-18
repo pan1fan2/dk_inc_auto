@@ -149,8 +149,8 @@ def page_dataframe():
     st.title('统计数据')
     #st.write(st.session_state["scale"]) 
     col1, col2 = st.columns(2)
-    #model_path = './weights.pt'
-    model_path = r'D:\yolo_seg\runs\segment\train9\weights\best.pt'
+    model_path = './weights.pt'
+    #model_path = r'D:\yolo_seg\runs\segment\train9\weights\best.pt'
     # 提供图片路径
     model = YOLO(model_path) 
     try :
@@ -261,8 +261,8 @@ def page_image():
     st.title('识别结果')
     #st.write("加载的图片：", *st.session_state['image_name'])
     col1, col2 = st.columns(2)
-    #model_path = './weights.pt'
-    model_path = r'D:\yolo_seg\runs\segment\train9\weights\best.pt'
+    model_path = './weights.pt'
+    #model_path = r'D:\yolo_seg\runs\segment\train9\weights\best.pt'
     # 提供图片路径
     model = YOLO(model_path) 
     try :
