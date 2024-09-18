@@ -4,9 +4,12 @@ Using Streamlit for data visualization and [click here](https://pan1fan2-dk-inc-
 
 There are 3 pages.  On the 1st page ， see below， users can load multiple images including targets of interest. 
 
-<img src = "./img/page1.png">
+<img src = "./img/page1_up.png">
 
-if the scale is not known
+if the scale is not known, then press the button that allows the user to measure the scale/pixel ratio from the uploaded image.
+
+<img src = "./img/page1_down.png">
+
 Given the scale on Page 1 ,you can check the sizes(length and area) of the targets on Page 2.
 
 <img src = "./img/page2.png">
