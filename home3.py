@@ -239,7 +239,7 @@ def page_dataframe():
 def page_image():
     st.title('识别结果')
     col1, col2 = st.columns(2)
-     model_path = './weights/best.pt'
+    model_path = './weights/best.pt'
     # 提供图片路径
     model = YOLO(model_path) 
     try :
