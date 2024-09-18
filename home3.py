@@ -4,10 +4,12 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from ultralytics import YOLO
-from PIL import Image
+from PIL import Image, ImageDraw
 from collections import defaultdict
 import pandas as pd
+from PIL import Image
 from itertools import combinations
+from streamlit_image_coordinates import streamlit_image_coordinates
 
 def rect_dimensions(points):
     """
@@ -37,6 +39,26 @@ def calculate_max_distance(points):
             max_distance = distance
     return max_distance
 
+def get_ellipse_coords(point: tuple[int, int]) -> tuple[int, int, int, int]:
+    center = point
+    radius = 10
+    return (
+        center[0] - radius,
+        center[1] - radius,
+        center[0] + radius,
+        center[1] + radius,
+    )
+
+# def click_points(img,key):
+#     value = streamlit_image_coordinates(img,use_column_width = "always",key=key)
+#     if value is not None:
+#         point = value["x"], value["y"]
+#         if point not in st.session_state["points"]:
+#             st.session_state["points"].append(point)
+#         return value["x"], value["y"],value["width"],value["height"]
+#     else:
+#         return None
+
 def click_button_scale():
     st.session_state.button_scale = not st.session_state.button_scale
 
@@ -45,11 +67,10 @@ def click_button_inclusion():
 
 def page_home():
     st.title('K模夹杂自动识别')
-    st.write("V3.0")
-    
+    st.write("V4.0")
     st.markdown(
     """
-    需用户加载待检测图片并提供标尺像素比 \n
+    需用户加载待检测图片并提供标尺像素比，如果像素比未知，请自行选取加载 \n
     数据表 - -  展示夹杂的统计数据    
     图片 - - 展示识别结果
     """
@@ -60,19 +81,9 @@ def page_home():
     st.session_state['image_name'] = []
     st.session_state['scale'] = 0
 
-    upload_imgs = st.file_uploader("选择待检测图片",accept_multiple_files = True )
-    scale2pixel = st.text_input("请提供标尺像素比")
+    upload_imgs = st.file_uploader("步骤一：选择待检测图片",accept_multiple_files = True )
     if len(upload_imgs) < 1 :
         st.warning("请加载图片")
-    try:
-        scale2pixel = float(eval(scale2pixel))
-        st.session_state['scale'] = scale2pixel
-    except:
-        st.warning("请提供标尺像素比") 
-
-    st.button('注释：标尺像素比', on_click=click_button_scale)
-    if st.session_state.button_scale:
-        st.write("标尺与所对应的像素长度的比值: 标尺 / 像素长")
         
     opencv_image_ = []
     # obatain file names
@@ -84,8 +95,51 @@ def page_home():
         st.session_state['image_name'].append(upload_img.name)
 
     #st.write(len(st.session_state['image_name']),len(st.session_state['image_toShow']))
+    scale2pixel = st.text_input("步骤二：请提供标尺像素比,若未知,先归零后点击下钮",value="0")
+    st.button('如果需要从图中测量？', on_click=click_button_scale)
+    try:
+        if scale2pixel != "0":
+            scale2pixel = float(eval(scale2pixel))
+            st.session_state['scale'] = scale2pixel
+        elif upload_imgs and st.session_state.button_scale :
+            scale_onImage = st.text_input("请提供待检测图像中的标尺值"+"("+chr(956)+"m)")
+            col1, col2 = st.columns(2)
+            try:
+                with col1:
+                    scale_onImage = int(eval(scale_onImage))
+                    selected_name = st.selectbox("选择一张图片预览",st.session_state['image_name'])
+                    selected_name_idx = st.session_state['image_name'].index(selected_name)
+                    img_1st = opencv_image_[selected_name_idx].copy()
+                    img_1st_rgb = cv2.cvtColor(img_1st,cv2.COLOR_BGR2RGB)
+                    img_1st_rgb_draw = Image.fromarray(img_1st_rgb)
+                    st.write("请单击下图标尺的左右两端")
+                    value = streamlit_image_coordinates(img_1st_rgb_draw,use_column_width = "always")
+                    if value is not None:
+                        point = value["x"], value["y"]
+                        if point not in st.session_state["points"]:
+                            st.session_state["points"].append(point) 
 
-    # tranform array to Image, then fed to Yolo
+                    # debug
+                    # st.write(len(st.session_state["points"]))
+                    # st.write(st.session_state["points"])    
+                    st.write("""--------------------------------------------------------------------------------原图--------------------------------------------------------------------------------""")
+                with col2:
+                    st.write("自动保存并显示所选择的位置,如果需重新选择,请单击左图任意远离标尺的位置两次,清空之前标记后再重新标记")
+                    for pt in st.session_state["points"][-2:]:
+                        point_resize = int(pt[0]/value['width']*img_1st_rgb_draw.size[0]), int(pt[1]/value['height']*img_1st_rgb_draw.size[1])
+                        circleShow =  cv2.circle(img_1st_rgb,point_resize,7,(0,0,255),-1)
+                    st.session_state['scale'] = scale_onImage/abs(st.session_state['points'][-1][0]/value['width']*img_1st_rgb_draw.size[0]-st.session_state['points'][-2][0]/value['width']*img_1st_rgb_draw.size[0])
+                    st.write(f"图中标尺为:{scale_onImage}",chr(956),"m", f", 对应的像素长度为:{int(abs(st.session_state['points'][-1][0]/value['width']*img_1st_rgb_draw.size[0]-st.session_state['points'][-2][0]/value['width']*img_1st_rgb_draw.size[0]))}") 
+                    st.write(f"标尺的像素比为:{scale_onImage}/{int(abs(st.session_state['points'][-1][0]/value['width']*img_1st_rgb_draw.size[0]-st.session_state['points'][-2][0]/value['width']*img_1st_rgb_draw.size[0]))} = {round(st.session_state['scale'],2)}") 
+                    st.image(circleShow,channels="BGR") 
+                    st.write("""-------------------------------------------------------------------------------标识效果------------------------------------------------------------------------------""")
+            except:
+                st.warning("还未提供标尺像素比") 
+        else:
+            st.warning("请提供标尺像素比,若不知，请按上钮")
+    except:
+        st.warning("请提供标尺像素比,若不知，请按上钮")    
+
     for img_arry in opencv_image_:
         img = cv2.cvtColor(img_arry,cv2.COLOR_BGR2RGB)
         st.session_state['image_toYolo'] .append(Image.fromarray(img))
@@ -93,8 +147,10 @@ def page_home():
 
 def page_dataframe():
     st.title('统计数据')
+    #st.write(st.session_state["scale"]) 
     col1, col2 = st.columns(2)
-    model_path = './weights/best.pt'
+    #model_path = './weights.pt'
+    model_path = r'D:\yolo_seg\runs\segment\train9\weights\best.pt'
     # 提供图片路径
     model = YOLO(model_path) 
     try :
@@ -196,16 +252,17 @@ def page_dataframe():
                 st.write("夹杂影响因子 = 各级别夹杂数 * 对应的权重")
                 st.write("夹杂率 = 夹杂影响因子 /  k模断面总数(5)") 
     
-    # except Exception as e:
-    #     st.write(e)
-    except:
-        return
+    except Exception as e:
+        st.write(e)
+    # except:
+    #     return
 
 def page_image():
     st.title('识别结果')
     #st.write("加载的图片：", *st.session_state['image_name'])
     col1, col2 = st.columns(2)
-    model_path = './weights/best.pt'
+    #model_path = './weights.pt'
+    model_path = r'D:\yolo_seg\runs\segment\train9\weights\best.pt'
     # 提供图片路径
     model = YOLO(model_path) 
     try :
@@ -271,6 +328,8 @@ if 'image_toYolo' not in st.session_state:
     st.session_state['image_toYolo'] = []
 if 'image_name' not in st.session_state:
     st.session_state['image_name'] = []
+if 'points' not in st.session_state:
+    st.session_state['points'] = []   
 if 'scale' not in st.session_state:
     st.session_state['scale'] = 0
 if 'button_scale' not in st.session_state:
@@ -280,6 +339,7 @@ if 'button_inclusion' not in st.session_state:
 if 'page' not in session_state:
     session_state['page'] = '主页'
 
+st.set_page_config(layout="wide")
 page = st.sidebar.radio('导航', ['主页','数据表','图片'])
 if page == '主页':
     page_home()
