@@ -39,26 +39,6 @@ def calculate_max_distance(points):
             max_distance = distance
     return max_distance
 
-def get_ellipse_coords(point: tuple[int, int]) -> tuple[int, int, int, int]:
-    center = point
-    radius = 10
-    return (
-        center[0] - radius,
-        center[1] - radius,
-        center[0] + radius,
-        center[1] + radius,
-    )
-
-# def click_points(img,key):
-#     value = streamlit_image_coordinates(img,use_column_width = "always",key=key)
-#     if value is not None:
-#         point = value["x"], value["y"]
-#         if point not in st.session_state["points"]:
-#             st.session_state["points"].append(point)
-#         return value["x"], value["y"],value["width"],value["height"]
-#     else:
-#         return None
-
 def click_button_scale():
     st.session_state.button_scale = not st.session_state.button_scale
 
@@ -149,8 +129,7 @@ def page_dataframe():
     st.title('统计数据')
     #st.write(st.session_state["scale"]) 
     col1, col2 = st.columns(2)
-    model_path = './weights.pt'
-    #model_path = r'D:\yolo_seg\runs\segment\train9\weights\best.pt'
+    model_path = './weights/best.pt'
     # 提供图片路径
     model = YOLO(model_path) 
     try :
@@ -259,10 +238,8 @@ def page_dataframe():
 
 def page_image():
     st.title('识别结果')
-    #st.write("加载的图片：", *st.session_state['image_name'])
     col1, col2 = st.columns(2)
-    model_path = './weights.pt'
-    #model_path = r'D:\yolo_seg\runs\segment\train9\weights\best.pt'
+     model_path = './weights/best.pt'
     # 提供图片路径
     model = YOLO(model_path) 
     try :
