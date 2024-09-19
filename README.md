@@ -2,6 +2,8 @@ A Yolo V8 model is trarined to automatically detect inclusions/oxides in the mic
 
 Using Streamlit for data visualization and [click here](https://pan1fan2-dk-inc-auto-home3-hrifmc.streamlit.app/) to see how it looks.
 
+<video width="630" height="300" src="./img/v4_demo.mp4"></video>
+
 There are 3 pages.  On the 1st page ， see below， users can load multiple images including targets of interest. 
 
 <img src = "./img/page1_up.png">
