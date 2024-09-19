@@ -1,4 +1,4 @@
-A Yolo V8 model is trained to automatically detect inclusions/oxides in the microscopic images.
+A Yolo V8 model is trained to detect inclusions/oxides in the microscopic images automatically.
 
 Using Streamlit for data visualization and [click here](https://pan1fan2-dk-inc-auto-home3-hrifmc.streamlit.app/) to see how it looks.
 
